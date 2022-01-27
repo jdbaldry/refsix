@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function show_help {
+  cat <<EOF
+Remove email address information from match report emails.
+
+Usage:
+  $0 2022-01-05.html
+
+Examples:
+  $0 2022-01-05.html
+EOF
+}
+
+if [[ $# -eq 0 ]]; then
+  show_help
+  exit 1
+fi
+
+for f in "$@"; do
+  sed -i \
+    -e '/^From: .*$/d' \
+    -e '/^To: .*$/d' \
+    -e '/^Date: .*$/d' \
+    -e '/^Subject: .*$/d' \
+    "$f"
+done
