@@ -4,10 +4,10 @@ set -euf -o pipefail
 
 function show_help {
   cat <<EOF
-Remove email address information from match report emails.
+Remove email address information from match report emails and tidy the HTML
 
 Usage:
-  $0 2022-01-05.html
+  $0 [file...]
 
 Examples:
   $0 2022-01-05.html
@@ -20,6 +20,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 for f in "$@"; do
+  tidy -icm --wrap 0 --new-inline-tags event-icon,team-line-up "$f" || true
   sed -i \
     -e '/^From: .*$/d' \
     -e '/^To: .*$/d' \

@@ -7,5 +7,7 @@ mkShell {
     goimports
     golangci-lint
     gopls
+
+    html-tidy
   ];
 }
