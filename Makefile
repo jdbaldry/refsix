@@ -16,3 +16,7 @@ MATCH_REPORTS = $(shell find -type f -name '*-*-*.html')
 .PHONY: sanitize-emails
 sanitize-emails: ## Remove email details from match reports.
 	./scripts/sanitize-emails $(MATCH_REPORTS)
+
+.PHONY: run
+run: ## Run analysis on match reports.
+	go run ./ | column -t | (sed -u 1q; sort -rnk 2)

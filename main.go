@@ -28,7 +28,6 @@ func main() {
 
 	files, _ := filepath.Glob(reportGlob)
 	for _, f := range files {
-		logger.Printf("Processing file %q\n", f)
 		absPath, err := filepath.Abs(f)
 		if err != nil {
 			logger.Fatalf("Could not determine absolute path to file: %v", err)
@@ -58,6 +57,7 @@ func main() {
 
 	fmt.Printf("Name\tGoals\tYellows\n")
 	for player, stats := range pss {
+		// TODO: Why are all stats double counted?
 		fmt.Printf("%s\t%d\t%d\n", player, stats.goals/2, stats.yellows/2)
 	}
 }
