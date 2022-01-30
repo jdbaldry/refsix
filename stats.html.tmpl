@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Games</th>
+        <th>Goals</th>
+        <th>Goals per game</th>
+        <th>Yellows</th>
+    </tr>
+    {{ range $player, $stats :=  . }}
+        <tr>
+            <td>{{ $player }}</td>
+            <td>{{ $stats.Games }}</td>
+            <td>{{ $stats.Goals }}</td>
+            <td>{{ printf "%.2f" $stats.GPG }}</td>
+            <td>{{ $stats.Yellows }}</td>
+        </tr>
+    {{ end}}
+</table>
+</body>
+</html>

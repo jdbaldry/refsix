@@ -17,6 +17,6 @@ MATCH_REPORTS = $(shell find -type f -name '*-*-*.html')
 sanitize-emails: ## Remove email details from match reports.
 	./scripts/sanitize-emails $(MATCH_REPORTS)
 
-.PHONY: run
-run: ## Run analysis on match reports.
-	go run ./ | column -t | (sed -u 1q; sort -rnk 2)
+stats.html: ## Generate the statistics page.
+stats.html: main.go events.go
+	go run ./ > $@

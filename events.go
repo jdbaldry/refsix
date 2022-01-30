@@ -10,14 +10,16 @@ import (
 
 var (
 	// TODO: Consider not throwing away the extra time minutes.
-	minuteRegexp = regexp.MustCompile(`^([0-9]+)'(?:\+[0-9]+')?$`)
-	nameRegexp   = regexp.MustCompile(`^([a-zA-Z]+).*$`)
+	minuteRegexp       = regexp.MustCompile(`^([0-9]+)'(?:\+[0-9]+')?$`)
+	nameRegexp         = regexp.MustCompile(`^([a-zA-Z]+).*$`)
+	teamListNameRegexp = regexp.MustCompile(`^ (?:Player|([a-zA-Z]+)).*$`)
 )
 
 type kind uint
 
 const (
-	eventGoal kind = iota
+	eventUnknown kind = iota
+	eventGoal
 	eventYellowCard
 )
 
@@ -41,11 +43,47 @@ type event struct {
 	team   team
 }
 
-// parseEvents parses all the events from a match report.
-func parseEvents(doc *html.Node) []event {
-	var events []event
-	var fn func(*html.Node)
+// extractPlayers extracts all players from a match report.
+func extractPlayers(doc *html.Node) []string {
+	var players []string
 
+	var fn func(*html.Node)
+	fn = func(n *html.Node) {
+		if isPlayer(n) {
+			// Each player table row has a single data cell with th
+			// player number and name between
+			// team, the second is for the away team.
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+
+				if c.Type == html.ElementNode && c.Data == "td" {
+					for c := c.FirstChild; c != nil; c = c.NextSibling {
+						if c.Type == html.ElementNode && c.Data == "span" && hasAttr(c, "codes", "codes") {
+							for c := c.FirstChild; c != nil; c = c.NextSibling {
+								if c.Type == html.TextNode {
+									matches := teamListNameRegexp.FindStringSubmatch(c.Data)
+									if len(matches) == 2 && matches[1] != "" {
+										players = append(players, matches[1])
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			fn(c)
+		}
+	}
+	fn(doc)
+	return players
+}
+
+// extractEvents parses all the events from a match report.
+func extractEvents(doc *html.Node) []event {
+	var events []event
+
+	var fn func(*html.Node)
 	fn = func(n *html.Node) {
 		if isEvent(n) {
 			// Each event has two data columns, the first is for the home
@@ -80,6 +118,8 @@ func parseEvents(doc *html.Node) []event {
 										e.kind = eventGoal
 									case "INCIDENT":
 										e.kind = eventYellowCard
+									default:
+										e.kind = eventUnknown
 									}
 								}
 							}
@@ -104,9 +144,9 @@ func parseEvents(doc *html.Node) []event {
 					}
 				}
 
-				if e.player != "" {
-					events = append(events, e)
-				}
+			}
+			if e.player != "" && e.kind != eventUnknown {
+				events = append(events, e)
 			}
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -139,6 +179,12 @@ func hasAttr(n *html.Node, key, value string) bool {
 		}
 	}
 	return false
+}
+
+// isPlayer returns true if the provided HTML node is the table row
+// representing a player in a team list.
+func isPlayer(n *html.Node) bool {
+	return n.Type == html.ElementNode && n.Data == "tr" && hasAttr(n, "class", "player")
 }
 
 // isEvent returns true if the provided HTML node is the table row

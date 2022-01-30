@@ -1,25 +1,38 @@
 package main
 
 import (
-	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"golang.org/x/net/html"
 )
 
 const (
-	reportGlob = "*-*-*.html"
+	reportGlob    = "*-*-*.html"
+	statsTemplate = "stats.html.tmpl"
 )
 
-type stats struct {
-	games   int
-	goals   int
-	yellows int
+// RawStats are statistics extracted from the match reports directly.
+type RawStats struct {
+	Games   int
+	Goals   int
+	Yellows int
 }
 
-type playerStats map[string]stats
+// ComputedStats are computed from the RawStats.
+type ComputedStats struct {
+	GPG float64
+}
+
+type Stats struct {
+	RawStats
+	ComputedStats
+}
+
+type playerStats map[string]Stats
 
 func main() {
 	logger := log.New(os.Stderr, "", log.Llongfile)
@@ -43,21 +56,43 @@ func main() {
 			logger.Fatalf("Could not parse file %s as HTML: %v", absPath, err)
 		}
 
-		for _, event := range parseEvents(doc) {
+		for _, player := range extractPlayers(doc) {
+			ps := pss[player]
+			ps.Games += 1
+			pss[player] = ps
+		}
+		for _, event := range extractEvents(doc) {
 			ps := pss[event.player]
 			switch event.kind {
 			case eventGoal:
-				ps.goals += 1
+				ps.Goals += 1
 			case eventYellowCard:
-				ps.yellows += 1
+				ps.Yellows += 1
 			}
 			pss[event.player] = ps
 		}
 	}
 
-	fmt.Printf("Name\tGoals\tYellows\n")
+	// fmt.Printf("Name\tGames\tGoals\tGPG\tYellows\n")
+	// for player, stats := range pss {
+	// 	// TODO: Why are some stats double counted?
+	// 	fmt.Printf("%s\t%d\t%d\t%.2f\t%d\n", player, stats.games, stats.goals/2, float64(stats.goals/2)/float64(stats.games), stats.yellows/2)
+	// }
+
 	for player, stats := range pss {
-		// TODO: Why are all stats double counted?
-		fmt.Printf("%s\t%d\t%d\n", player, stats.goals/2, stats.yellows/2)
+		stats.GPG = float64(stats.Goals) / float64(stats.Games)
+		pss[player] = stats
+	}
+
+	st, err := ioutil.ReadFile(statsTemplate)
+	if err != nil {
+		logger.Fatalf("Could not read template file %s: %v", statsTemplate, err)
+	}
+
+	t := template.New("stats.html")
+	t.Parse(string(st))
+
+	if err := t.Execute(os.Stdout, pss); err != nil {
+		logger.Fatalf("Unable to execute template: %v", err)
 	}
 }
