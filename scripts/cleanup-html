@@ -20,7 +20,8 @@ if [[ $# -eq 0 ]]; then
 fi
 
 for f in "$@"; do
-  tidy -icm --wrap 0 --new-inline-tags event-icon,team-line-up "$f" || true
+  echo "Processing $f"
+  tidy -icm --tidy-mark false --wrap 0 --quiet true --new-inline-tags event-icon,team-line-up "$f" || true
   sed -i \
     -e '/^From: .*$/d' \
     -e '/^To: .*$/d' \
