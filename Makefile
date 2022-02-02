@@ -18,5 +18,5 @@ cleanup-html: ## Clean up and format HTML files.
 	./scripts/cleanup-html $(HTML_FILES)
 
 stats.html: ## Generate the statistics page.
-stats.html: stats.html.tmpl main.go events.go
+stats.html: stats.html.tmpl main.go events.go $(HTML_FILES)
 	go run ./ > $@
