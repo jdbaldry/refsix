@@ -73,15 +73,13 @@ func main() {
 		}
 	}
 
-	// fmt.Printf("Name\tGames\tGoals\tGPG\tYellows\n")
-	// for player, stats := range pss {
-	// 	// TODO: Why are some stats double counted?
-	// 	fmt.Printf("%s\t%d\t%d\t%.2f\t%d\n", player, stats.games, stats.goals/2, float64(stats.goals/2)/float64(stats.games), stats.yellows/2)
-	// }
-
+	// Add goals per game and remove any players that have not played a minimum number of games.
 	for player, stats := range pss {
 		stats.GPG = float64(stats.Goals) / float64(stats.Games)
 		pss[player] = stats
+		if stats.Games < 3 {
+			delete(pss, player)
+		}
 	}
 
 	st, err := ioutil.ReadFile(statsTemplate)
