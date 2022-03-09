@@ -1,26 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>Stats</title>
-</head>
-<body>
-<table>
-    <tr>
+  <head>
+    <title>Stats</title>
+    <script>
+      const getCellValue = (tr, i) => tr.children[i].innerText || tr.children[i].textContent;
+      const compare = (a, b) => a !== '' && b !== '' && !isNaN(a) && !isNaN(b) ? a - b : a.toString().localeCompare(b);
+      const compareCol = (i, asc) => (a, b) => compare(getCellValue(asc ? a : b, i), getCellValue(asc ? b : a, i));
+
+      window.onload = () => {
+          document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+              const table = th.closest('table');
+              console.log("here");
+              Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
+                  .sort(compareCol(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+                  .forEach(tr => table.appendChild(tr) );
+          })));
+      };
+    </script>
+    <style>
+      table, th, td { border: 1px solid black; }
+      th { cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tr>
         <th>Name</th>
         <th>Games</th>
         <th>Goals</th>
         <th>Goals per game</th>
         <th>Yellows</th>
-    </tr>
-    {{ range $player, $stats :=  . }}
-        <tr>
-            <td>{{ $player }}</td>
-            <td>{{ $stats.Games }}</td>
-            <td>{{ $stats.Goals }}</td>
-            <td>{{ printf "%.2f" $stats.GPG }}</td>
-            <td>{{ $stats.Yellows }}</td>
-        </tr>
-    {{ end}}
-</table>
-</body>
+      </tr>
+{{ range $player, $stats :=  . }}
+      <tr>
+        <td>{{ $player }}</td>
+        <td>{{ $stats.Games }}</td>
+        <td>{{ $stats.Goals }}</td>
+        <td>{{ printf "%.2f" $stats.GPG }}</td>
+        <td>{{ $stats.Yellows }}</td>
+      </tr>
+      {{ end}}
+    </table>
+  </body>
 </html>
